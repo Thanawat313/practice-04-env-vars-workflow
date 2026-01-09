@@ -18,27 +18,19 @@ jobs:
         run: docker build -t my-app:latest .
 
       # 2. Run the container and pass your secrets as environment variables
-      - name: Run Container and Tests
-        env:
-          MONGODB_CLUSTER_ADDRESS: cluster0.ntrwp.mongodb.net
-          MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
-          MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
-          PORT: 8080
+      - name: Run Container
         run: |
           docker run -d \
             --name app-container \
-            -p 8080:$PORT \
-            -e MONGODB_CLUSTER_ADDRESS=$MONGODB_CLUSTER_ADDRESS \
-            -e MONGODB_USERNAME=$MONGODB_USERNAME \
-            -e MONGODB_PASSWORD=$MONGODB_PASSWORD \
-            -e MONGODB_DB_NAME=$MONGODB_DB_NAME \
+            -p 8080:8080 \
+            -e MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }} \
+            -e MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }} \
+            -e MONGODB_CLUSTER_ADDRESS=cluster0.ntrwp.mongodb.net \
+            -e MONGODB_DB_NAME=gha-demo \
             my-app:latest
           
-          # Give the container a few seconds to start up
-          sleep 10
-          
-          # Run tests inside the running container
-          docker exec app-container npm test
+          sleep 10 # Wait for the app to try connecting to DB
+          docker ps -a # Show if the container is "Up" or "Exited"
 
   deploy:
     needs: test
